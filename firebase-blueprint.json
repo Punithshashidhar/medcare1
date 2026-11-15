@@ -1,0 +1,311 @@
+{
+  "entities": {
+    "PatientProfile": {
+      "title": "PatientProfile",
+      "description": "Private patient account profile linked to Firebase Authentication UID.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "fullName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 120
+        },
+        "phone": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 15,
+          "pattern": "^[0-9+\\-\\s]+$"
+        },
+        "age": {
+          "type": "integer"
+        },
+        "bloodGroup": {
+          "type": "string",
+          "enum": ["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "fullName", "email", "phone", "age", "bloodGroup", "createdAt", "updatedAt"]
+    },
+    "AuthorizedDoctor": {
+      "title": "AuthorizedDoctor",
+      "description": "Verified Medplex hospital doctor record authorizing a staff Google UID to access the Doctor Login Portal.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 120
+        },
+        "doctorId": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "doctorName": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 80
+        },
+        "department": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 50
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "email", "doctorId", "doctorName", "department", "active", "createdAt", "updatedAt"]
+    },
+    "AppointmentRecord": {
+      "title": "AppointmentRecord",
+      "description": "Booked doctor consultation or preventive checkup slot synced for Patient Portal and Doctor Portal.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "patientUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "patientEmail": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 120
+        },
+        "tokenNumber": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 32
+        },
+        "bookingType": {
+          "type": "string",
+          "enum": ["doctor", "checkup"]
+        },
+        "itemId": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100
+        },
+        "departmentOrCategory": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80
+        },
+        "patientName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80
+        },
+        "patientAge": {
+          "type": "integer"
+        },
+        "phone": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 15
+        },
+        "date": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 20
+        },
+        "timeSlot": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 20
+        },
+        "originalFee": {
+          "type": "number"
+        },
+        "donorPassCode": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "discountApplied": {
+          "type": "number"
+        },
+        "finalFee": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Confirmed", "Completed", "Cancelled"]
+        },
+        "doctorNotes": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "prescriptionSummary": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "patientUid",
+        "patientEmail",
+        "tokenNumber",
+        "bookingType",
+        "itemId",
+        "title",
+        "departmentOrCategory",
+        "patientName",
+        "patientAge",
+        "phone",
+        "date",
+        "timeSlot",
+        "originalFee",
+        "discountApplied",
+        "finalFee",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "DonorPassRecord": {
+      "title": "DonorPassRecord",
+      "description": "Free blood donation registration generating a 20% total bill discount pass.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "patientUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "donorPassCode": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 32
+        },
+        "fullName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80
+        },
+        "bloodGroup": {
+          "type": "string",
+          "enum": ["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"]
+        },
+        "age": {
+          "type": "integer"
+        },
+        "weightKg": {
+          "type": "number"
+        },
+        "phone": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 15
+        },
+        "preferredDate": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 20
+        },
+        "discountPercent": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "patientUid",
+        "donorPassCode",
+        "fullName",
+        "bloodGroup",
+        "age",
+        "weightKg",
+        "phone",
+        "preferredDate",
+        "discountPercent",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/patients/{userId}": {
+      "schema": { "$ref": "#/entities/PatientProfile" },
+      "description": "Private patient account profiles restricted to the owning patient or verified medical staff."
+    },
+    "/authorizedDoctors/{userId}": {
+      "schema": { "$ref": "#/entities/AuthorizedDoctor" },
+      "description": "Staff registry authorizing Google UIDs for the Doctor Login Portal."
+    },
+    "/appointments/{appointmentId}": {
+      "schema": { "$ref": "#/entities/AppointmentRecord" },
+      "description": "Appointment bookings accessible to the booking patient and verified Medplex doctors."
+    },
+    "/donorPasses/{donorId}": {
+      "schema": { "$ref": "#/entities/DonorPassRecord" },
+      "description": "Blood donor discount passes tied to the donating patient UID."
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Medplex Hospital",
+  "description": "Affordable multi-specialty community hospital portal featuring doctor slot booking, 24/7 ambulance dispatch, preventive checkup plans, diagnostic equipment directory, and a 20% free blood donor bill discount program.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

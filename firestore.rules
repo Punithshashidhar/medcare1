@@ -1,0 +1,235 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isVerifiedMedicalAdmin() {
+      return isEmailVerified() && request.auth.token.email == 'punithshashidar1@gmail.com';
+    }
+
+    function isAuthorizedDoctorDoc() {
+      return isEmailVerified()
+        && exists(/databases/$(database)/documents/authorizedDoctors/$(request.auth.uid))
+        && get(/databases/$(database)/documents/authorizedDoctors/$(request.auth.uid)).data.active == true;
+    }
+
+    function isValidBloodGroup(group) {
+      return group in ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'];
+    }
+
+    function isValidPatientProfile(data) {
+      return data.keys().hasAll(['uid', 'fullName', 'email', 'phone', 'age', 'bloodGroup', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'fullName', 'email', 'phone', 'age', 'bloodGroup', 'createdAt', 'updatedAt'])
+        && isValidId(data.uid)
+        && data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 80
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 120
+        && data.phone is string && data.phone.size() >= 10 && data.phone.size() <= 15
+        && data.age is int && data.age >= 1 && data.age <= 115
+        && isValidBloodGroup(data.bloodGroup)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAuthorizedDoctor(data) {
+      return data.keys().hasAll(['uid', 'email', 'doctorId', 'doctorName', 'department', 'active', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'email', 'doctorId', 'doctorName', 'department', 'active', 'createdAt', 'updatedAt'])
+        && isValidId(data.uid)
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 120
+        && isValidId(data.doctorId) && data.doctorId.size() >= 3 && data.doctorId.size() <= 64
+        && data.doctorName is string && data.doctorName.size() >= 3 && data.doctorName.size() <= 80
+        && data.department is string && data.department.size() >= 2 && data.department.size() <= 50
+        && data.active is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAppointmentRecord(data) {
+      return data.keys().hasAll([
+        'id', 'patientUid', 'patientEmail', 'tokenNumber', 'bookingType', 'itemId',
+        'title', 'departmentOrCategory', 'patientName', 'patientAge', 'phone',
+        'date', 'timeSlot', 'originalFee', 'discountApplied', 'finalFee',
+        'status', 'createdAt', 'updatedAt'
+      ])
+        && data.keys().hasOnly([
+          'id', 'patientUid', 'patientEmail', 'tokenNumber', 'bookingType', 'itemId',
+          'title', 'departmentOrCategory', 'patientName', 'patientAge', 'phone',
+          'date', 'timeSlot', 'originalFee', 'donorPassCode', 'discountApplied', 'finalFee',
+          'status', 'doctorNotes', 'prescriptionSummary', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id) && data.id.size() >= 3
+        && isValidId(data.patientUid)
+        && data.patientEmail is string && data.patientEmail.size() >= 3 && data.patientEmail.size() <= 120
+        && data.tokenNumber is string && data.tokenNumber.size() >= 5 && data.tokenNumber.size() <= 32
+        && data.bookingType in ['doctor', 'checkup']
+        && isValidId(data.itemId) && data.itemId.size() >= 3 && data.itemId.size() <= 64
+        && data.title is string && data.title.size() >= 2 && data.title.size() <= 100
+        && data.departmentOrCategory is string && data.departmentOrCategory.size() >= 2 && data.departmentOrCategory.size() <= 80
+        && data.patientName is string && data.patientName.size() >= 2 && data.patientName.size() <= 80
+        && data.patientAge is int && data.patientAge >= 1 && data.patientAge <= 115
+        && data.phone is string && data.phone.size() >= 10 && data.phone.size() <= 15
+        && data.date is string && data.date.size() >= 8 && data.date.size() <= 20
+        && data.timeSlot is string && data.timeSlot.size() >= 4 && data.timeSlot.size() <= 20
+        && data.originalFee is number && data.originalFee >= 0 && data.originalFee <= 50000
+        && data.discountApplied is number && data.discountApplied >= 0 && data.discountApplied <= 50000
+        && data.finalFee is number && data.finalFee >= 0 && data.finalFee <= 50000
+        && data.status in ['Confirmed', 'Completed', 'Cancelled']
+        && (!('donorPassCode' in data) || (data.donorPassCode is string && data.donorPassCode.size() <= 32))
+        && (!('doctorNotes' in data) || (data.doctorNotes is string && data.doctorNotes.size() <= 500))
+        && (!('prescriptionSummary' in data) || (data.prescriptionSummary is string && data.prescriptionSummary.size() <= 500))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidDonorPassRecord(data) {
+      return data.keys().hasAll([
+        'id', 'patientUid', 'donorPassCode', 'fullName', 'bloodGroup',
+        'age', 'weightKg', 'phone', 'preferredDate', 'discountPercent', 'createdAt'
+      ])
+        && data.keys().hasOnly([
+          'id', 'patientUid', 'donorPassCode', 'fullName', 'bloodGroup',
+          'age', 'weightKg', 'phone', 'preferredDate', 'discountPercent', 'createdAt'
+        ])
+        && isValidId(data.id) && data.id.size() >= 3
+        && isValidId(data.patientUid)
+        && data.donorPassCode is string && data.donorPassCode.size() >= 8 && data.donorPassCode.size() <= 32
+        && data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 80
+        && isValidBloodGroup(data.bloodGroup)
+        && data.age is int && data.age >= 18 && data.age <= 65
+        && data.weightKg is number && data.weightKg >= 50 && data.weightKg <= 250
+        && data.phone is string && data.phone.size() >= 10 && data.phone.size() <= 15
+        && data.preferredDate is string && data.preferredDate.size() >= 8 && data.preferredDate.size() <= 20
+        && data.discountPercent is int && data.discountPercent == 20
+        && data.createdAt is timestamp;
+    }
+
+    match /patients/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isVerifiedMedicalAdmin() || isAuthorizedDoctorDoc());
+      allow list: if isVerifiedMedicalAdmin();
+      allow create: if isEmailVerified()
+        && isValidId(userId)
+        && isOwner(userId)
+        && isValidPatientProfile(incoming())
+        && incoming().uid == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isEmailVerified()
+        && isValidId(userId)
+        && isOwner(userId)
+        && isValidPatientProfile(incoming())
+        && incoming().uid == existing().uid
+        && incoming().email == existing().email
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'phone', 'age', 'bloodGroup', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    match /authorizedDoctors/{userId} {
+      allow get: if isValidId(userId) && isSignedIn() && (isOwner(userId) || isVerifiedMedicalAdmin());
+      allow list: if isVerifiedMedicalAdmin();
+      allow create: if isVerifiedMedicalAdmin()
+        && isValidId(userId)
+        && isValidAuthorizedDoctor(incoming())
+        && incoming().uid == userId
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedMedicalAdmin()
+        && isValidId(userId)
+        && isValidAuthorizedDoctor(incoming())
+        && incoming().uid == existing().uid
+        && incoming().email == existing().email
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['doctorId', 'doctorName', 'department', 'active', 'updatedAt']);
+      allow delete: if isVerifiedMedicalAdmin() && isValidId(userId);
+    }
+
+    match /appointments/{appointmentId} {
+      allow get: if isValidId(appointmentId) && isSignedIn() && (
+        existing().patientUid == request.auth.uid || isVerifiedMedicalAdmin() || isAuthorizedDoctorDoc()
+      );
+      allow list: if isSignedIn() && (
+        resource.data.patientUid == request.auth.uid || isVerifiedMedicalAdmin()
+      );
+      allow create: if isEmailVerified()
+        && isValidId(appointmentId)
+        && isValidAppointmentRecord(incoming())
+        && incoming().id == appointmentId
+        && incoming().patientUid == request.auth.uid
+        && incoming().status == 'Confirmed'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isEmailVerified()
+        && isValidId(appointmentId)
+        && isValidAppointmentRecord(incoming())
+        && existing().status == 'Confirmed'
+        && incoming().id == existing().id
+        && incoming().patientUid == existing().patientUid
+        && incoming().patientEmail == existing().patientEmail
+        && incoming().tokenNumber == existing().tokenNumber
+        && incoming().bookingType == existing().bookingType
+        && incoming().itemId == existing().itemId
+        && incoming().title == existing().title
+        && incoming().departmentOrCategory == existing().departmentOrCategory
+        && incoming().originalFee == existing().originalFee
+        && incoming().discountApplied == existing().discountApplied
+        && incoming().finalFee == existing().finalFee
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (existing().patientUid == request.auth.uid
+            && incoming().status == 'Cancelled'
+            && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']))
+          ||
+          ((isVerifiedMedicalAdmin() || isAuthorizedDoctorDoc())
+            && incoming().status in ['Confirmed', 'Completed', 'Cancelled']
+            && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'doctorNotes', 'prescriptionSummary', 'updatedAt']))
+        );
+      allow delete: if false;
+    }
+
+    match /donorPasses/{donorId} {
+      allow get: if isValidId(donorId) && isSignedIn() && (
+        existing().patientUid == request.auth.uid || isVerifiedMedicalAdmin() || isAuthorizedDoctorDoc()
+      );
+      allow list: if isSignedIn() && (
+        resource.data.patientUid == request.auth.uid || isVerifiedMedicalAdmin()
+      );
+      allow create: if isEmailVerified()
+        && isValidId(donorId)
+        && isValidDonorPassRecord(incoming())
+        && incoming().id == donorId
+        && incoming().patientUid == request.auth.uid
+        && incoming().discountPercent == 20
+        && incoming().createdAt == request.time;
+      allow update, delete: if false;
+    }
+  }
+}
